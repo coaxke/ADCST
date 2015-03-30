@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>Microsoft.Azure.ActiveDirectory.GraphClient</id>
+    <version>2.0.6</version>
+    <title>Microsoft Azure Active Directory Graph Client Library</title>
+    <authors>Microsoft</authors>
+    <owners>Microsoft</owners>
+    <licenseUrl>http://go.microsoft.com/fwlink/?LinkId=329770</licenseUrl>
+    <projectUrl>http://go.microsoft.com/fwlink/?LinkId=398199</projectUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <description>NET Client Library for Microsoft Azure Active Directory Graph API.
+
+Learn more about Azure AD Graph API @ http://msdn.microsoft.com/en-us/library/azure/hh974476.aspx.
+
+Usage information is available on our AAD Graph blog @ http://blogs.msdn.com/b/aadgraphteam/archive/2014/12/12/announcing-azure-ad-graph-api-client-library-2-0.aspx and sample usage on github @ https://github.com/AzureADSamples/WebApp-GraphAPI-DotNet and https://github.com/AzureADSamples/ConsoleApp-GraphAPI-DotNet.</description>
+    <summary>Microsoft Azure ActiveDirectory Graph API Client library provides easy to use functionality to access your directory information from Azure ActiveDirectory.</summary>
+    <releaseNotes>Added Support for 2 new User properties - alternativeSignInNamesInfo and creationType.</releaseNotes>
+    <copyright>Copyright © Microsoft Corporation</copyright>
+    <tags>Azure ActiveDirectory GraphAPI GraphClient GraphLibrary AzureAD</tags>
+    <dependencies>
+      <dependency id="Microsoft.Data.Services.Client" version="5.6.3" />
+      <dependency id="Microsoft.Data.Edm" version="5.6.3" />
+      <dependency id="Microsoft.Data.OData" version="5.6.3" />
+      <dependency id="System.Spatial" version="5.6.3" />
+    </dependencies>
+  </metadata>
+</package>

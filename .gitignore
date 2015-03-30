@@ -1,0 +1,14 @@
+*.vssscc
+*.vspscc
+*.suo
+*.tmp
+~*.docx
+*.dll
+
+/lib/**
+/src/packages
+#ignore all bin or obj directories
+**/bin/**/*.*
+**/obj/**/*.*
+
+*.user
