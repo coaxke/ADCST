@@ -1,7 +1,7 @@
 # ADCST
 
-ADCST (Active Directory Contact Sync Tool) is a simple console application written in .NET that will connect to Azure Active Directory, enumerate users and then create Contact objects in an on-premises active directory (or delte them if required). 
+ADCST (Active Directory Contact Sync Tool) is a simple console application written in .NET that will connect to Azure Active Directory, enumerate users and then create Contact objects in an on-premises active directory (or delete them if required). 
 
-This tool aims to solve an issue I am currently facing where two disparic companies need to exchange contact info for usage in Exchange Online.
+This tool aims to solve an issue where two disparate companies need to exchange contact info for usage in Exchange Online.
 
-...Its a work in progress
+See the following Post for more Info: http://www.resdevops.com/2015/04/28/active-directory-contact-sync-tool-adcst/
