@@ -5,22 +5,32 @@ namespace ADCST.Configuration
 
         public interface IConfiguration
         {
-            string TenantName { get; }
+            string TennantName { get; }
             string TenantID { get; }
             string ClientId { get; }
             string ClientSecret { get; }
             string ClientIdForUserAuth { get; }
             string AuthString { get; }
             string ResourceURL { get; }
+            string AzureADUserGroup { get; }
+            string FQDomainName { get; }
+            string DestinationOUDN { get; }
+            string ContactPrefix { get; }
+            bool AllowCreationOfADObjects { get; }
+            bool AllowDeletionOfADObjects { get; }
+            bool VerboseLogUserCreation { get; }
+            bool VerboseLogUserDeletion { get; }
         }
 
         public class ADCSTConfiguration : IConfiguration
         {
+            //Azure Online Config Items
+
             public string TennantName
             {
                 get
                 {
-                    return ConfigurationManager.AppSettings["TenantName"];
+                    return ConfigurationManager.AppSettings["AzureADTenantName"];
                 }
             }
 
@@ -28,7 +38,7 @@ namespace ADCST.Configuration
             {
                 get
                 {
-                    return ConfigurationManager.AppSettings["TenantID"];
+                    return ConfigurationManager.AppSettings["AzureADTenantID"];
                 }
             }
 
@@ -36,7 +46,7 @@ namespace ADCST.Configuration
             {
                 get
                 {
-                    return ConfigurationManager.AppSettings["ClientId"];
+                    return ConfigurationManager.AppSettings["AzureADClientId"];
                 }
             }
 
@@ -44,7 +54,7 @@ namespace ADCST.Configuration
             {
                 get
                 {
-                    return ConfigurationManager.AppSettings["ClientSecret"];
+                    return ConfigurationManager.AppSettings["AzureADClientSecret"];
                 }
             }
 
@@ -52,7 +62,7 @@ namespace ADCST.Configuration
             {
                 get
                 {
-                    return ConfigurationManager.AppSettings["ClientIdForUserAuth"];
+                    return ConfigurationManager.AppSettings["AzureADClientIdForUserAuth"];
                 }
             }
 
@@ -72,7 +82,101 @@ namespace ADCST.Configuration
                 {
                     return "https://graph.windows.net";
                 }
-           }        
+           }
+
+            public string AzureADUserGroup
+            {
+                get
+                {
+                    return ConfigurationManager.AppSettings["AzureADUserGroup"];
+                }
+            }
+
+            //Local Active Directory Config Items
+
+           public string FQDomainName
+            {
+                get
+                {
+                    return ConfigurationManager.AppSettings["FQDomainName"];
+                }
+            }
+           public string DestinationOUDN
+           {
+                get
+               {
+                   return ConfigurationManager.AppSettings["DestinationOUDN"];
+               }
+           }
+           public string ContactPrefix
+           {
+                get
+               {
+                   return ConfigurationManager.AppSettings["ContactPrefix"];
+               }
+           }
+           public bool AllowCreationOfADObjects
+           {
+               get
+               {
+                   bool allowCreationOfADObjects;
+
+                   if(!bool.TryParse(ConfigurationManager.AppSettings["AllowCreationOfADObjects"], out allowCreationOfADObjects))
+                   {
+                       allowCreationOfADObjects = true;
+                   }
+
+                   return allowCreationOfADObjects;
+               }
+           }
+
+            public bool AllowDeletionOfADObjects
+           {
+                get
+               {
+                   bool allowDeletionOfADObjects;
+
+                    if(!bool.TryParse(ConfigurationManager.AppSettings["AllowDeletionOfADObjects"], out allowDeletionOfADObjects))
+                    {
+                        allowDeletionOfADObjects = true;
+                    }
+
+                    return allowDeletionOfADObjects;
+               }
+           }
+
+           public bool VerboseLogUserCreation
+            {
+               get
+                {
+                    bool verboseLogUserCreation;
+
+                       if(!bool.TryParse(ConfigurationManager.AppSettings["VerboseLogUserCreation"], out verboseLogUserCreation))
+                       {
+                           verboseLogUserCreation = false;
+                       }
+
+                   return verboseLogUserCreation;
+                }
+            }
+
+           public bool VerboseLogUserDeletion
+           {
+               get
+               {
+                   bool verboseLogUserDeletion;
+
+                   if(!bool.TryParse(ConfigurationManager.AppSettings["VerboseLogUserDeletion"], out verboseLogUserDeletion))
+                   {
+                       verboseLogUserDeletion = false;
+                   }
+
+                   return verboseLogUserDeletion;
+               }
+           }
+
+
+
        }
    }
 
