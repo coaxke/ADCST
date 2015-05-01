@@ -19,7 +19,7 @@ namespace ADCST
         {
             if (string.IsNullOrEmpty(arg))
             {
-                ShowHelp();
+                ADCSTMain(Logger, config, authProvidor, azureAdFunctions, onPremAdHelper, onPremAdFunctions);
             }
             else
             {
@@ -82,13 +82,13 @@ namespace ADCST
         {
             ActiveDirectoryClient _ClientSession;
 
-            if (AdClient[0] == null)
+            if (AdClient != null && AdClient.Length > 0)
             {
-                _ClientSession = azureAdFunctions.ADClient(config, authProvidor, Logger);
+                _ClientSession = AdClient[0];
             }
             else
             {
-                _ClientSession = AdClient[0];
+                _ClientSession = azureAdFunctions.ADClient(config, authProvidor, Logger);               
             }
             
 
