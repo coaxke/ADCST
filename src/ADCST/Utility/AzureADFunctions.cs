@@ -14,7 +14,7 @@ namespace ADCST.Utility
     {
         ActiveDirectoryClient ADClient(IConfiguration Configuration, IAuthenticationProvidor authProvidor, Logger Logger);
         Group GetADGroup(ActiveDirectoryClient ADClient, string GroupNameSearchString, Logger Logger);
-        List<IDirectoryObject> GetAdGroupMembers(Group RetrievedGroup, IConfiguration Configuration, Logger Logger);
+        List<Tuple<string, IDirectoryObject>> GetAdGroupMembers (Group RetrievedGroup, IConfiguration Configuration, Logger Logger);
         string TenantDetails(ActiveDirectoryClient ADClient, Logger Logger, IConfiguration Config);
         List<IUser> SearchADUser(ActiveDirectoryClient ADClient, Logger logger, string SearchString);
     }
@@ -82,15 +82,13 @@ namespace ADCST.Utility
             }
         }
 
-        public List<IDirectoryObject> GetAdGroupMembers(Group RetrievedGroup, IConfiguration Configuration, Logger Logger)
+        public List<Tuple<string, IDirectoryObject>> GetAdGroupMembers(Group RetrievedGroup, IConfiguration Configuration, Logger Logger)
         {
+            List<Tuple<string, IDirectoryObject>> DirectoryObjects = new List<Tuple<string, IDirectoryObject>>();
+
             if (RetrievedGroup.ObjectId != null)
             {
                 IGroupFetcher retrievedGroupFetcher = RetrievedGroup;
-
-                List<IDirectoryObject> UserDirectoryObjects = new List<IDirectoryObject>();
-                int GroupObjects = 0;
-                int ContactObjects = 0;
 
                 try
                 {
@@ -103,16 +101,15 @@ namespace ADCST.Utility
                         {
                             if (directoryObject is User)
                             {
-                                UserDirectoryObjects.Add(directoryObject);
-
+                                DirectoryObjects.Add(Tuple.Create("user", directoryObject));    
                             }
                             if (directoryObject is Contact)
                             {
-                                ContactObjects++;
+                                DirectoryObjects.Add(Tuple.Create("contact", directoryObject));
                             }
                             if (directoryObject is Group)
                             {
-                                GroupObjects++;
+                                DirectoryObjects.Add(Tuple.Create("group", directoryObject));
                             }
                         }
                         GroupMembers = GroupMembers.GetNextPageAsync().Result;
@@ -124,17 +121,11 @@ namespace ADCST.Utility
                     Logger.Error(String.Format("Error retrieving Group membership {0} {1}", ex.Message, ex.InnerException != null ? ex.InnerException.Message : ""));
                 }
 
-                if (GroupObjects > 0 || ContactObjects > 0)
-                {
-                    Logger.Debug(string.Format(@"There were {0} Groups that were not recursed when getting the group membership for {1} 
-                                           and {2} contact objects. These will not be synced to target ActiveDirectory.", GroupObjects.ToString(), RetrievedGroup.ToString(), ContactObjects.ToString()));
-                }
-
-                return UserDirectoryObjects;
+                return DirectoryObjects;
             }
             else
             {
-                return null;
+                return DirectoryObjects;
             }
         }
 

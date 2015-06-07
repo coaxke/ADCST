@@ -14,21 +14,24 @@ namespace ADCST.Utility
 {
     public interface IOnPremAdFunctions
     {
-        List<DirectoryEntry> GetOUContactObjects(IConfiguration Config, IOnPremADHelper OnPremADHelper, Logger Logger);
-        int CreateADContacts (Logger Logger, IConfiguration Config, DirectoryEntry DirEntry, Dictionary<string, IUser>AzureUsers);
+        List<DirectoryEntry> GetOUContactObjects(string FQDomainName, string DestinationOUDN, IOnPremADHelper OnPremADHelper, Logger Logger);
+        int CreateADUserContacts(Logger Logger, IConfiguration Config, DirectoryEntry DirEntry, IOnPremADHelper OnPremADHelper, Dictionary<string, IUser> AzureUsers);
+        int CreateADGroupContacts(Logger Logger, IConfiguration Config, DirectoryEntry DirEntry, IOnPremADHelper OnPremADHelper, Dictionary<string, IGroup> AzureGroups);
         int DeleteADContacts (Logger Logger, IConfiguration Config, DirectoryEntry DirEntry, Dictionary<string, DirectoryEntry> OnPremContacts);
+        void AddADContactToGroup (Logger Logger, IConfiguration Config, IOnPremADHelper OnPremADHelper, string ContactDNPath);
+
     }
 
     public sealed class OnPremADFunctions : IOnPremAdFunctions
     {
         //Search Contact
-        public List<DirectoryEntry> GetOUContactObjects (IConfiguration Config, IOnPremADHelper OnPremADHelper, Logger Logger)
+        public List<DirectoryEntry> GetOUContactObjects (string FQDomainName, string DestinationOUDN, IOnPremADHelper OnPremADHelper, Logger Logger)
         {
             SearchResultCollection ListADContactResults;
             List <DirectoryEntry> ADContacts = new List<DirectoryEntry>();
 
-            //Will enter Directory at $DestinationOUDN and retrieve ALL properties (empty string array)
-            using (DirectorySearcher ListADContacts = new DirectorySearcher(OnPremADHelper.GetADDirectoryEntry(Config.FQDomainName,Config.DestinationOUDN, Logger), 
+            //Will enter Directory at $ContactsDestinationOUDN and retrieve ALL properties (empty string array)
+            using (DirectorySearcher ListADContacts = new DirectorySearcher(OnPremADHelper.GetADDirectoryEntry(FQDomainName,DestinationOUDN, Logger), 
                                                                            "(objectClass=contact)", new string[] {}))            
             {
                 ListADContacts.PropertiesToLoad.Add("mail");
@@ -48,19 +51,19 @@ namespace ADCST.Utility
             }
             else
             {
-                Logger.Debug(String.Format("No Contact objects found in {0}", Config.DestinationOUDN));
-                Console.WriteLine("No Contact objects found in {0}", Config.DestinationOUDN);
+                Logger.Debug(String.Format("No Contact objects found in {0}", DestinationOUDN));
+                Console.WriteLine("No Contact objects found in {0}", DestinationOUDN);
 
                 //Retrun an empty list.
                 return ADContacts;
             }
         }
    
-        //Create Contact 
-        public int CreateADContacts(Logger Logger, IConfiguration Config, DirectoryEntry DirEntry, Dictionary<string, IUser> AzureUsers)
+        //Create User Contact objects
+        public int CreateADUserContacts(Logger Logger, IConfiguration Config, DirectoryEntry DirEntry, IOnPremADHelper OnPremADHelper, Dictionary<string, IUser> AzureUsers)
         {
             int CreationCount = 0;
-            Logger.Debug("Begining Contact Creation...");
+            Logger.Debug("Begining User Contact Creation...");
             foreach (User AzureUser in AzureUsers.Values)
             {
                 try
@@ -68,12 +71,12 @@ namespace ADCST.Utility
                     if (AzureUser.AccountEnabled.HasValue && AzureUser.AccountEnabled.Value)
                     {
 
-                        DirectoryEntry newUser = DirEntry.Children.Add("CN=" + AzureUser.Mail, "contact");
+                        DirectoryEntry newUser = DirEntry.Children.Add("CN=" + AzureUser.DisplayName, "contact");
 
                         //Add Each Property we care about for the respective User account (if not null):
-                        if (!string.IsNullOrEmpty(Config.ContactPrefix))
+                        if (!string.IsNullOrEmpty(Config.ObjectPrefix))
                         {
-                            newUser.Properties["description"].Value = Config.ContactPrefix;
+                            newUser.Properties["description"].Value = Config.ObjectPrefix;
                         }
                         if (!string.IsNullOrEmpty(AzureUser.GivenName))
                         {
@@ -120,6 +123,13 @@ namespace ADCST.Utility
 
                         newUser.CommitChanges();
                         
+                        //Call Add Contact to Group if Key exists
+                        if (!string.IsNullOrEmpty(Config.PermittedSendersGroupDN))
+                        {
+                            string UserDN = newUser.Path.Substring(newUser.Path.LastIndexOf('/') + 1);
+                            AddADContactToGroup(Logger, Config, OnPremADHelper, UserDN);
+                        }
+                        
                         CreationCount++;
 
                         if (Config.VerboseLogUserCreation)
@@ -131,14 +141,82 @@ namespace ADCST.Utility
                 catch (Exception ex)
                 {
                     Logger.Error(String.Format("Error when Creating user contact {0} {1}", ex.Message, ex.InnerException != null ? ex.InnerException.Message : ""));
-                }
-
-                
+                }                
             }
 
             return CreationCount;
 
         }
+
+        //Create Group Contact objects
+       public int CreateADGroupContacts(Logger Logger, IConfiguration Config, DirectoryEntry DirEntry, IOnPremADHelper OnPremADHelper, Dictionary<string, IGroup> AzureGroups)
+        {
+            int CreationCount = 0;
+            Logger.Debug("Begining Group Contact Creation...");
+
+            foreach (Group AzureGroup in AzureGroups.Values)
+            {
+                try
+                {
+                    if (AzureGroup.MailEnabled == true)
+                    {
+                        DirectoryEntry newGroup = DirEntry.Children.Add("CN=" + AzureGroup.DisplayName, "contact");
+
+                        //Add Each Property we care about for the respective User account (if not null):
+                        if (!string.IsNullOrEmpty(Config.ObjectPrefix))
+                        {
+                            if(!string.IsNullOrEmpty(AzureGroup.Description))
+                            {
+                                newGroup.Properties["description"].Value = String.Format("{0} - {1}",Config.ObjectPrefix, AzureGroup.Description);
+                            }
+                            else
+                            {
+                                newGroup.Properties["description"].Value = Config.ObjectPrefix;
+                            }                            
+                        }
+                        if (!string.IsNullOrEmpty(AzureGroup.Mail))
+                        {
+                            newGroup.Properties["Mail"].Value = AzureGroup.Mail;
+                            newGroup.Properties["proxyAddresses"].AddRange(new object[] { "SMTP:" + AzureGroup.Mail}); //todo: ADD Any extra Proxy Addresses (if they exist as smtp:<somemail>
+                        }
+                        if (!string.IsNullOrEmpty(AzureGroup.DisplayName))
+                        {
+                            newGroup.Properties["displayName"].Value = AzureGroup.DisplayName;
+                            //newGroup.Properties["name"].Value = AzureGroup.DisplayName;
+                        }
+
+                        newGroup.CommitChanges();
+                        
+                        CreationCount++;
+
+                        if (Config.VerboseLogUserCreation)
+                        {
+                            Logger.Debug(String.Format("Created Group Contact {0}", AzureGroup.Mail));
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(String.Format("Error when Creating user contact {0} {1}", ex.Message, ex.InnerException != null ? ex.InnerException.Message : ""));
+                }  
+            }
+
+            return CreationCount;
+        }
+
+        public void AddADContactToGroup (Logger Logger, IConfiguration Config, IOnPremADHelper OnPremADHelper, string ContactDNPath)
+       {
+            try
+            {
+               DirectoryEntry GroupDirectoryEntry = OnPremADHelper.GetADDirectoryEntry(Config.FQDomainName, Config.PermittedSendersGroupDN, Logger);
+               GroupDirectoryEntry.Properties["member"].Add(ContactDNPath);
+               GroupDirectoryEntry.CommitChanges();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(string.Format("Error when adding Contact to Group {0} , {1} {2}", Config.PermittedSendersGroupDN, ex.Message, ex.InnerException !=null ? ex.InnerException.Message : ""));
+            }
+       }
             
         //Delete Contact
         public int DeleteADContacts(Logger Logger, IConfiguration Config, DirectoryEntry DirEntry, Dictionary<string, DirectoryEntry> OnPremContacts)
@@ -150,7 +228,7 @@ namespace ADCST.Utility
             {
                 try
                 {
-                    DirectoryEntry ContactObjectToDelete = DirEntry.Children.Find("CN="+ OnPremContact.Properties["Mail"].Value.ToString(), "contact");
+                    DirectoryEntry ContactObjectToDelete = DirEntry.Children.Find(OnPremContact.Name, "contact");
 
                     DirEntry.Children.Remove(ContactObjectToDelete);
 

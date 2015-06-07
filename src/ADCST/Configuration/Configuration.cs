@@ -1,4 +1,6 @@
 ﻿using System.Configuration;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ADCST.Configuration
 {
@@ -13,13 +15,17 @@ namespace ADCST.Configuration
             string AuthString { get; }
             string ResourceURL { get; }
             string AzureADUserGroup { get; }
+            string AzureADGroupsGroup { get; }
             string FQDomainName { get; }
-            string DestinationOUDN { get; }
-            string ContactPrefix { get; }
+            string ContactsDestinationOUDN { get; }
+            string GroupsDestinationOUDN { get; }
+            string PermittedSendersGroupDN { get; } 
+            string ObjectPrefix { get; }
             bool AllowCreationOfADObjects { get; }
             bool AllowDeletionOfADObjects { get; }
             bool VerboseLogUserCreation { get; }
             bool VerboseLogUserDeletion { get; }
+            //List<string> RemoteGroupsToSync { get; }
         }
 
         public class ADCSTConfiguration : IConfiguration
@@ -91,6 +97,13 @@ namespace ADCST.Configuration
                     return ConfigurationManager.AppSettings["AzureADUserGroup"];
                 }
             }
+            public string AzureADGroupsGroup
+            {
+                get
+                {
+                    return ConfigurationManager.AppSettings["AzureADGroupsGroup"];
+                }
+            }
 
             //Local Active Directory Config Items
 
@@ -101,18 +114,32 @@ namespace ADCST.Configuration
                     return ConfigurationManager.AppSettings["FQDomainName"];
                 }
             }
-           public string DestinationOUDN
+           public string ContactsDestinationOUDN
            {
                 get
                {
-                   return ConfigurationManager.AppSettings["DestinationOUDN"];
+                   return ConfigurationManager.AppSettings["ContactsDestinationOUDN"];
                }
            }
-           public string ContactPrefix
+            public string GroupsDestinationOUDN
            {
                 get
                {
-                   return ConfigurationManager.AppSettings["ContactPrefix"];
+                   return ConfigurationManager.AppSettings["GroupsDestinationOUDN"];
+               }
+           }
+            public string PermittedSendersGroupDN
+            {
+                get
+                {
+                    return ConfigurationManager.AppSettings["PermittedSendersGroupDN"];
+                }
+            }
+           public string ObjectPrefix
+           {
+                get
+               {
+                   return ConfigurationManager.AppSettings["ObjectPrefix"];
                }
            }
            public bool AllowCreationOfADObjects
@@ -175,8 +202,23 @@ namespace ADCST.Configuration
                }
            }
 
+           // public List<string> RemoteGroupsToSync
+           //{
+           //     get
+           //    {
+           //        List<string> remoteGroupsToSync = new List<string>();
 
+           //         if(!string.IsNullOrEmpty(ConfigurationManager.AppSettings["RemoteGroupsToSync"]))
+           //         {
+           //             string[] RemoteGroups = ConfigurationManager.AppSettings["RemoteGroupsToSync"].Split(',');
 
+           //             remoteGroupsToSync = RemoteGroups.ToList();
+           //         }
+
+           //        return remoteGroupsToSync;
+                    
+           //    }
+           //}
        }
    }
 
